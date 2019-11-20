@@ -1,4 +1,4 @@
-# zilliqa_proofOfAsset_prototype
+# Ziliqa chain Proof of Asset
 
 
 # Proof of Existence X Proof of Asset
