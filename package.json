@@ -1,0 +1,28 @@
+{
+  "name": "zilliqa_proof_of_asset_prototype",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/commx-io/zilliqa_proof_of_asset_prototype.git"
+  },
+  "keywords": [
+    "zilliqa",
+    "IPFS",
+    "proof",
+    "ownership"
+  ],
+  "author": "TrueX",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/commx-io/zilliqa_proof_of_asset_prototype/issues"
+  },
+  "homepage": "https://github.com/commx-io/zilliqa_proof_of_asset_prototype#readme"
+}
