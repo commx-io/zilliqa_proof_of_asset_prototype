@@ -1,0 +1,185 @@
+scilla_version 0
+
+(* ProofIPFS Contract *)
+(* This example contract demonstrates how a CRUD app can be built. *)
+
+(* @note: ProofIPFS allows members to manage a shared repository of items. *)
+(* ProofIPFS has an owner, who can add members in. Members will be able *)
+(* to add, remove and update items in the store. Access controls logic is *)
+(* delibrately left out for brevity. But if you need examples, you can  *)
+(* refer to `addMember` transition to see how access controls can be implemented. *)
+
+
+(* In production deployments, you will want to implement proper access *)
+(* control logic in your smart contract *)
+
+(***************************************************)
+(*               Associated library                *)
+(***************************************************)
+library ProofIPFS
+
+let one = Uint128 1
+let zero = Uint128 0
+
+let one_msg =
+  fun (msg: Message) =>
+  let nil_msg = Nil {Message} in
+  Cons {Message} msg nil_msg
+
+(* error codes library *)
+let code_success        = Uint32 0
+let code_item_not_found = Uint32 1
+let code_not_authorized = Uint32 2
+let code_invalid_params = Uint32 3
+let code_itemid_exist   = Uint32 4
+
+(***************************************************)
+(*             The contract definition             *)
+(***************************************************)
+contract ProofIPFS
+(owner: ByStr20,
+storeName: String)
+
+(* storeName can be immutable if it won't ever be changed             *)
+
+
+(* Membership data consists of three attributes:                       *)
+(*     ByStr20 address (index)                                                *)
+(*     String  name;                                                   *)
+(*     Uint32  membershipType; // 0: Regular, 1: Premium, 2: Corporate *)
+
+field members: Map ByStr20 (Pair (String) (Uint32))
+                = Emp ByStr20 (Pair (String) (Uint32))
+
+
+(* ipfsInventory will store a Map of Items                          *)
+(*     String  ipfs_cid (index)                                     *)
+(*     ByStr20 owner address                                        *)
+(*     BNum    block_number of registraton                          *)
+
+field ipfsInventory: Map String (Pair (ByStr20) (BNum))
+                    = Emp String (Pair (ByStr20) (BNum))
+
+
+(* ======== transitions ===============*)
+
+
+(* @notice: add member is an example. It is not used in other functions. *)
+(* @dev: in real contracts, a developer can use a members mapping to manage *)
+(* access controls to grant a user permission to perform certain actions *)
+(* (e.g. add/remove items) *)
+
+transition addMember(name: String, addr: ByStr20, memberType: Uint32)
+
+    (* Access control: Checking if sender is the owner of the Contract *)
+    is_authorized = builtin eq _sender owner;
+    match is_authorized with
+    | True =>
+        (* Only the owner can add member *)
+        (* Check if membership type is valid. *)
+        valid_type = let three = Uint32 3 in
+                        builtin lt memberType three;
+        match valid_type with
+        | True =>
+            (* First build the pair ADT *)
+            p = Pair {(String) (Uint32)} name memberType;
+            members[addr] := p;
+
+            msg = {_tag: "";
+                    _recipient: _sender;
+                    _amount: Uint128 0;
+                    code: code_success};
+            msgs = one_msg msg;
+            send msgs
+        | False =>
+            (* Code for the membership type is invalid *)
+            msg = {_tag: "";
+                    _recipient: _sender;
+                    _amount: Uint128 0;
+                    code: code_invalid_params};
+            msgs = one_msg msg;
+            send msgs
+        end
+    | False =>
+        (* Unauthorized transaction *)
+        msg = {_tag: "";
+                _recipient: _sender;
+                _amount: Uint128 0;
+                code: code_not_authorized};
+        msgs = one_msg msg;
+        send msgs
+    end
+end
+
+(* @notice: Allows a `_sender` to add a item to the proofipfs *)
+(* @dev   : Access controls are omitted for brevity. In production contracts, *)
+(*          you will want to implement proper access controls to allow only *)
+(*          an owner or member to add a item. *)
+(* @param: itemName : title of the item *)
+(* @param: author:     author of the item *)
+
+transition setOwnership(ipfs_cid: String)
+
+    items <- ipfsInventory;
+    (* new_item_id = let one = Uint32 1 in builtin add last_item_id one;*)
+
+    itemExist = builtin contains items ipfs_cid;
+    match itemExist with
+    | True =>
+        msg = {_tag: "";
+                    _recipient: _sender;
+                    _amount: Uint128 0;
+                    code: code_itemid_exist};
+        msgs = one_msg msg;
+        send msgs
+    | False =>
+        (* Creating a new Item Model *)
+				(* A new item model is a Pair of owner address (_sender) and block_number *)
+				block_number <- & BLOCKNUMBER;
+        new_item = Pair {(ByStr20) (BNum)} _sender block_number;
+
+        (* Add the new item to the item_inventory Map, with ipfs_cid as the key   *)
+        ipfsInventory[ipfs_cid] := new_item;
+
+        msg = {_tag: "";
+                _recipient: _sender;
+                _amount: Uint128 0;
+                code: code_success};
+
+        msgs = one_msg msg;
+        send msgs
+    end
+end
+
+(* @notice: Allows a `_sender` to remove a item from the ipfsInventory *)
+(* @dev   : Access control not yet implemented *)
+
+transition deleteOwnership(ipfs_cid: String)
+
+    items <- ipfsInventory;
+    exist = builtin contains items ipfs_cid;
+    match exist with
+    | False =>
+        (* Item ID is not found in the records. *)
+        msg = {_tag: "";
+                _recipient: _sender;
+                _amount: Uint128 0;
+                code: code_item_not_found};
+        msgs = one_msg msg;
+        send msgs
+		| True =>
+			(* TODO verify ownership *)
+			(* Access control: Checking if sender is the owner of the Contract *)
+			(* owner, block_number = ipfsInventory[ipfs_cid] *)
+			(* is_authorized = builtin eq _sender owner;     *)
+			delete ipfsInventory[ipfs_cid];
+        msg = {_tag: "";
+                _recipient: _sender;
+                _amount: Uint128 0;
+                code: code_success};
+        msgs = one_msg msg;
+        send msgs
+    end
+
+
+end
