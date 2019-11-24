@@ -1,4 +1,4 @@
-# Ziliqa blockchain : Proof of Asset
+# Zilliqa blockchain : Proof of Asset
 
 Concept of 'proof of existence' to prove ownership and existence of a file. IPFS will be used as file storage and to ensure file integrity.
 
@@ -9,12 +9,13 @@ Once a file is stored on IPFS, the Content IDentifier (CID) = hash of the file c
 
 The following transitions shall be available within the Scilla contract
 
-### SetOwnership (ipfs_cid : String)
-allows (only) the sender to register an IPFS CID for an item (stored on IPFS) with his Zilliqa addess.
+### setOwnership (ipfs_cid : String)
+Allows (only) the sender to register an IPFS CID for an item (stored on IPFS) with his Zilliqa addess.
 More information on IPFS Content Identifier (CID) can be found here:
 
-(https://github.com/multiformats/cid)[https://github.com/multiformats/cid]
-(https://github.com/multiformats/multibase)[https://github.com/multiformats/multibase]
+[https://github.com/multiformats/cid](https://github.com/multiformats/cid)
+
+[https://github.com/multiformats/multibase](https://github.com/multiformats/multibase)
 
 
 `_sender` is used internally as the address
@@ -28,35 +29,44 @@ let code_invalid_params = Uint32 3
 let code_item_exist     = Uint32 4
 ```
 
-### GetOwner (ipfs_cid : String) => owner : ByStr20
-return the owner address for a given IPFS CID
+### checkRegistered (ipfs_cid : String)
+Check if a IPFS CID/hash has been registered already.
 
 possible return codes:
 ```
 let code_success        = Uint32 0
+let code_item_not_found = Uint32 1
 let code_invalid_params = Uint32 3 (invalid CID format)
-let code_item_not_exist = Uint32 4 (IPFS CID was not found)
 ```
 
-### DeleteOwnership (ipfs_cid : String)
-Delete / unregister ownership of given IPFS CID
+### getOwner (ipfs_cid : String) => owner : ByStr20
+Return the owner address for a given IPFS CID.
+
+possible return codes:
+```
+let code_success        = Uint32 0
+let code_item_not_found = Uint32 1
+let code_invalid_params = Uint32 3 (invalid CID format)
+```
+
+### deleteOwnership (ipfs_cid : String)
+Delete / unregister ownership of given IPFS CID.
 Only owner of items is allowed to execute this transitions
 
 possible return codes:
 
 ```
 let code_success        = Uint32 0
+let code_item_not_found = Uint32 1
 let code_not_authorized = Uint32 2
 let code_invalid_params = Uint32 3
-let code_item_not_exist = Uint32 4 (IPFS CID was not found)
 ```
 
-### GetItems (owner : ByStr20) => item_list : List(ipfs_cid : String)
-return a list of IPFS addresses (hash) which have been registered ownership with a given address
+### getItems (owner : ByStr20) => item_list : List(ipfs_cid : String)
+Return a list of IPFS CID which have been registered ownership with a given owner address.
 
 possible return codes:
 ```
 let code_success        = Uint32 0
-let code_invalid_params = Uint32 3 (invalid address)
-let code_item_not_exist = Uint32 4 (address was not found)
+let code_invalid_params = Uint32 3 (invalid address / not found)
 ```
