@@ -64,9 +64,9 @@ let code_invalid_params = Uint32 3 (invalid CID format)
 ```
 
 
-### deleteOwnership (ipfs_cid : String) *** TODO : no access control implemented ***
+### deleteOwnership (ipfs_cid : String)
 Delete / unregister ownership of given IPFS CID.
-Only owner of items is allowed to execute this transitions
+Only owner (registered address) of item is allowed to execute this transitions
 
 possible return codes:
 
