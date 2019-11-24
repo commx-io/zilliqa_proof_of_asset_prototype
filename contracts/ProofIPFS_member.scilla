@@ -10,6 +10,11 @@ library ProofIPFS
 let one = Uint128 1
 let zero = Uint128 0
 
+let one_msg =
+  fun (msg: Message) =>
+  let nil_msg = Nil {Message} in
+  Cons {Message} msg nil_msg
+
 (* error codes library *)
 let code_success        = Uint32 0
 let code_item_not_found = Uint32 1
@@ -41,69 +46,35 @@ field ipfsInventory: Map String (Pair (ByStr20) (BNum))
 transition setOwnership(ipfs_cid: String)
 
     items <- ipfsInventory;
+    (* new_item_id = let one = Uint32 1 in builtin add last_item_id one;*)
 
     itemExist = builtin contains items ipfs_cid;
     match itemExist with
     | True =>
-        e = {_eventname : "setOwnership"; code : code_itemid_exist};
-        event e
+        msg = {_tag: "";
+                    _recipient: _sender;
+                    _amount: Uint128 0;
+                    code: code_itemid_exist};
+        msgs = one_msg msg;
+        send msgs
     | False =>
         (* Creating a new Item Model *)
-		(* A new item model is a Pair of owner address (_sender) and block_number *)
-		block_number <- & BLOCKNUMBER;
+				(* A new item model is a Pair of owner address (_sender) and block_number *)
+				block_number <- & BLOCKNUMBER;
         new_item = Pair {(ByStr20) (BNum)} _sender block_number;
 
         (* Add the new item to the item_inventory Map, with ipfs_cid as the key   *)
         ipfsInventory[ipfs_cid] := new_item;
 
-        e = {_eventname : "setOwnership"; code : code_success};
-        event e
+        msg = {_tag: "";
+                _recipient: _sender;
+                _amount: Uint128 0;
+                code: code_success};
+
+        msgs = one_msg msg;
+        send msgs
     end
 end
-
-
-(* @notice: check if a IPFS CID/hash has been registered already              *)
-(* @dev   : No ccess controls - anybody is allowed to get that information    *)
-(* @param : ipfs_cid : IPFS CID (hash) of item (file)                         *)
-
-transition checkRegistered(ipfs_cid: String)
-
-    items_map <- ipfsInventory;
-
-    itemExist = builtin contains items_map ipfs_cid;
-    match itemExist with
-    | True =>
-        e = {_eventname : "checkRegistered"; code : code_success};
-        event e
-    | False =>
-        e = {_eventname : "checkRegistered"; code : code_item_not_found};
-        event e
-    end
-end
-
-
-(* @notice: get registration info (owner, block_number) for a IPFS file       *)
-(* @dev   : No ccess controls - anybody is allowed to get that information    *)
-(* @param : ipfs_cid : IPFS CID (hash) of item (file)                         *)
-
-transition getRegistration(ipfs_cid: String)
-
-    items_map <- ipfsInventory;
-
-    registration = builtin get items_map ipfs_cid;
-    match registration with
-    | Some v =>
-        (* v contains (owner, block_number) (Pair (ByStr20) (BNum)) *)
-        e = {_eventname: "getRegistration_success"; code: code_success; msg: v};
-        event e
-
-    | None =>
-        e = {_eventname: "getRegistration_item_not_found"; code: code_item_not_found};
-        event e
-
-    end
-end
-
 
 (* @notice: Allows a `_sender` to remove a item from the ipfsInventory *)
 (* @dev   : Access control not yet implemented *)
@@ -115,15 +86,25 @@ transition deleteOwnership(ipfs_cid: String)
     match exist with
     | False =>
         (* Item ID is not found in the records. *)
-        e = {_eventname: "deleteOwnership"; code: code_item_not_found};
-        event e
-    | True =>
-        (* TODO verify ownership *)
-        (* Access control: Checking if sender is the owner of the Contract *)
-        (* owner, block_number = ipfsInventory[ipfs_cid] *)
-        (* is_authorized = builtin eq _sender owner;     *)
-        delete ipfsInventory[ipfs_cid];
-        e = {_eventname: "deleteOwnership"; code: code_success};
-        event e
+        msg = {_tag: "";
+                _recipient: _sender;
+                _amount: Uint128 0;
+                code: code_item_not_found};
+        msgs = one_msg msg;
+        send msgs
+		| True =>
+			(* TODO verify ownership *)
+			(* Access control: Checking if sender is the owner of the Contract *)
+			(* owner, block_number = ipfsInventory[ipfs_cid] *)
+			(* is_authorized = builtin eq _sender owner;     *)
+			delete ipfsInventory[ipfs_cid];
+        msg = {_tag: "";
+                _recipient: _sender;
+                _amount: Uint128 0;
+                code: code_success};
+        msgs = one_msg msg;
+        send msgs
     end
+
+
 end
