@@ -30,7 +30,7 @@ let code_item_exist     = Uint32 4
 ```
 
 ### checkRegistered (ipfs_cid : String)
-Check if a IPFS CID/hash has been registered already.
+Return the owner address and block_number of registration for a given IPFS CID. Using the block_number a time_stamp can be requested from the Zilliqa blockchain.
 
 possible return codes:
 ```
@@ -39,7 +39,18 @@ let code_item_not_found = Uint32 1
 let code_invalid_params = Uint32 3 (invalid CID format)
 ```
 
-### getOwner (ipfs_cid : String) => owner : ByStr20
+
+### getRegistration (ipfs_cid : String)
+Check if a IPFS CID/hash has been registered already.
+
+possible return codes:
+```
+let code_success        = Uint32 0
+let code_item_not_found = Uint32 1
+let code_invalid_params = Uint32 3 (invalid CID format)
+
+
+### getOwner (ipfs_cid : String) => owner : ByStr20 *** not implemented yet ***
 Return the owner address for a given IPFS CID.
 
 possible return codes:
@@ -49,7 +60,7 @@ let code_item_not_found = Uint32 1
 let code_invalid_params = Uint32 3 (invalid CID format)
 ```
 
-### deleteOwnership (ipfs_cid : String)
+### deleteOwnership (ipfs_cid : String) *** TODO : no access control implemented ***
 Delete / unregister ownership of given IPFS CID.
 Only owner of items is allowed to execute this transitions
 
