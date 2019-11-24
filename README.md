@@ -88,4 +88,4 @@ let code_invalid_params = Uint32 3 (invalid address / not found)
 ```
 
 ## Testnet contract
-see [releases](releases) 
+see [Releases](../../releases) 
