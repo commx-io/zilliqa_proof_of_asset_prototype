@@ -2,6 +2,8 @@ scilla_version 0
 
 (* ProofIPFS Contract *)
 
+import PairUtils ListUtils
+
 (***************************************************)
 (*               Associated library                *)
 (***************************************************)
@@ -16,6 +18,9 @@ let code_item_not_found = Uint32 1
 let code_not_authorized = Uint32 2
 let code_invalid_params = Uint32 3
 let code_itemid_exist   = Uint32 4
+
+let fst_f = @fst (ByStr20) (BNum)
+let snd_f = @snd (ByStr20) (BNum)
 
 (***************************************************)
 (*             The contract definition             *)
@@ -106,24 +111,27 @@ end
 
 
 (* @notice: Allows a `_sender` to remove a item from the ipfsInventory *)
-(* @dev   : Access control not yet implemented *)
 
 transition deleteOwnership(ipfs_cid: String)
 
-    items <- ipfsInventory;
-    exist = builtin contains items ipfs_cid;
-    match exist with
-    | False =>
-        (* Item ID is not found in the records. *)
-        e = {_eventname: "deleteOwnership"; code: code_item_not_found};
-        event e
-    | True =>
-        (* TODO verify ownership *)
-        (* Access control: Checking if sender is the owner of the Contract *)
-        (* owner, block_number = ipfsInventory[ipfs_cid] *)
-        (* is_authorized = builtin eq _sender owner;     *)
-        delete ipfsInventory[ipfs_cid];
-        e = {_eventname: "deleteOwnership"; code: code_success};
-        event e
+  value_pair <- ipfsInventory[ipfs_cid];
+  match value_pair with
+  | Some v =>
+    reg_address  = fst_f v;
+    is_owner = builtin eq reg_address _sender;
+    match is_owner with
+        | True =>
+            delete ipfsInventory[ipfs_cid];
+            e = {_eventname: "deleteOwnership"; code: code_success};
+            event e
+            
+        | False =>
+            e = {_eventname: "deleteOwnership"; code: code_not_authorized};
+            event e
     end
+  | None =>
+    e = {_eventname: "deleteOwnership"; code: code_item_not_found};
+    event e
+  end
+
 end
