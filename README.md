@@ -70,3 +70,6 @@ possible return codes:
 let code_success        = Uint32 0
 let code_invalid_params = Uint32 3 (invalid address / not found)
 ```
+
+# Testnet contract
+contract address: zil1jfs6gfuu2w3hlhp55xaklckava4r2k5d8xy72z
