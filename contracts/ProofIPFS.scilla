@@ -9,7 +9,7 @@ import PairUtils ListUtils
 (***************************************************)
 library ProofIPFS
 
-let one = Uint128 1
+let one  = Uint128 1
 let zero = Uint128 0
 
 (* error codes library *)
@@ -45,14 +45,12 @@ field ipfsInventory: Map String (Pair (ByStr20) (BNum))
 
 transition setOwnership(ipfs_cid: String)
 
-    items <- ipfsInventory;
-
-    itemExist = builtin contains items ipfs_cid;
-    match itemExist with
-    | True =>
+    registration <- ipfsInventory[ipfs_cid];
+    match registration with
+    | Some v =>
         e = {_eventname : "setOwnership"; code : code_itemid_exist};
         event e
-    | False =>
+    | None =>
         (* Creating a new Item Model *)
 		(* A new item model is a Pair of owner address (_sender) and block_number *)
 		block_number <- & BLOCKNUMBER;
@@ -67,35 +65,13 @@ transition setOwnership(ipfs_cid: String)
 end
 
 
-(* @notice: check if a IPFS CID/hash has been registered already              *)
-(* @dev   : No ccess controls - anybody is allowed to get that information    *)
-(* @param : ipfs_cid : IPFS CID (hash) of item (file)                         *)
-
-transition checkRegistered(ipfs_cid: String)
-
-    items_map <- ipfsInventory;
-
-    itemExist = builtin contains items_map ipfs_cid;
-    match itemExist with
-    | True =>
-        e = {_eventname : "checkRegistered"; code : code_success};
-        event e
-    | False =>
-        e = {_eventname : "checkRegistered"; code : code_item_not_found};
-        event e
-    end
-end
-
-
 (* @notice: get registration info (owner, block_number) for a IPFS file       *)
 (* @dev   : No ccess controls - anybody is allowed to get that information    *)
 (* @param : ipfs_cid : IPFS CID (hash) of item (file)                         *)
 
 transition getRegistration(ipfs_cid: String)
 
-    items_map <- ipfsInventory;
-
-    registration = builtin get items_map ipfs_cid;
+    registration <- ipfsInventory[ipfs_cid];
     match registration with
     | Some v =>
         (* v contains (owner, block_number) (Pair (ByStr20) (BNum)) *)
@@ -114,8 +90,8 @@ end
 
 transition deleteOwnership(ipfs_cid: String)
 
-  value_pair <- ipfsInventory[ipfs_cid];
-  match value_pair with
+  registration <- ipfsInventory[ipfs_cid];
+  match registration with
   | Some v =>
     reg_address  = fst_f v;
     is_owner = builtin eq reg_address _sender;
