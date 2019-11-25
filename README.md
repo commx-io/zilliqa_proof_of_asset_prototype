@@ -31,19 +31,9 @@ let code_item_exist     = Uint32 4
 ```
 
 
-### checkRegistered (ipfs_cid : String)
-Return the owner address and block_number of registration for a given IPFS CID. Using the block_number a time_stamp can be requested from the Zilliqa blockchain.
-
-possible return codes:
-```
-let code_success        = Uint32 0
-let code_item_not_found = Uint32 1
-let code_invalid_params = Uint32 3 (invalid CID format)
-```
-
-
 ### getRegistration (ipfs_cid : String)
 Check if a IPFS CID/hash has been registered already.
+Returns account_address and block_number of registration if exist.
 
 possible return codes:
 ```
