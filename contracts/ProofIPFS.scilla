@@ -31,6 +31,12 @@ let one_msg =
 		let nil_msg = Nil {Message} in
 		Cons {Message} msg nil_msg
 
+let one_element_list =
+	fun (item : String) =>
+		let nil_item = Nil {String} in
+		Cons {String} item nil_item
+
+
 (***************************************************)
 (*             The contract definition             *)
 (***************************************************)
@@ -48,6 +54,10 @@ field price: Uint128 = Uint128 0
 field ipfsInventory: Map String (Pair (ByStr20) (BNum))
                    = Emp String (Pair (ByStr20) (BNum))
 
+(* mapping each account to a list of registered items / IPFS files  *)
+
+field registered_items: Map ByStr20 List(String)
+					  = Emp ByStr20 List(String)
 
 (* ======== transitions ===============*)
 
@@ -89,11 +99,23 @@ transition registerOwnership(ipfs_cid: String)
 			(* Add the new item to the item_inventory Map, with ipfs_cid as the key   *)
 			ipfsInventory[ipfs_cid] := new_item;
 
+			(* update registered_items list for _sender sccount *)
+			current_list <- registered_items[_sender];
+
+			match current_list with
+			| Some v =>
+				new_list = Cons {String} ipfs_cid v;
+				registered_items[_sender] := new_list
+			| None =>
+				new_list = one_element_list ipfs_cid;
+				registered_items[_sender] := new_list
+			end;
+
 			e = {_eventname : "registerOwnership"; code : code_success};
 			event e
 				
 		| False =>
-			e = {_eventname : "registerOwnership"; code : code_amount_wrong};
+			e = {_eventname : "registerOwnership()_amount_wrong"; code: code_amount_wrong; current_price: current_price; amount: _amount};
 			event e
 		end
 	end
@@ -116,6 +138,27 @@ transition getRegistration(ipfs_cid: String)
 
 	| None =>
 		e = {_eventname: "getRegistration_item_not_found"; code: code_item_not_found};
+		event e
+
+	end
+end
+
+
+(* @notice: get registered items for a given account                       *)
+(* @dev   : No ccess controls - anybody is allowed to get that information *)
+(* @param : (ByStr20) account                                              *)
+(* @return: List(String) ipfs_cid                                          *)
+
+transition getItemList(account: ByStr20)
+
+	item_list <- registered_items[_sender];
+	match item_list with
+	| Some v =>
+		e = {_eventname: "getItemList()"; code: code_success; item_list: v};
+		event e
+
+	| None =>
+		e = {_eventname: "getItemList()_account_not_found"; code: code_item_not_found};
 		event e
 
 	end
