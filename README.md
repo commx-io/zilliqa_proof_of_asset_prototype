@@ -10,8 +10,8 @@ Once a file is stored on IPFS, the Content IDentifier (CID) = hash of the file c
 The following transitions shall be available within the Scilla contract
 
 
-### setOwnership (ipfs_cid : String)
-Allows (only) the sender to register an IPFS CID for an item (stored on IPFS) with his Zilliqa addess.
+### registerOwnership (ipfs_cid : String)
+Allows (only) the sender to register an IPFS CID for an item (stored on IPFS) with his Zilliqa address.
 More information on IPFS Content Identifier (CID) can be found here:
 
 [https://github.com/multiformats/cid](https://github.com/multiformats/cid)
@@ -19,9 +19,9 @@ More information on IPFS Content Identifier (CID) can be found here:
 [https://github.com/multiformats/multibase](https://github.com/multiformats/multibase)
 
 
-`_sender` is used internally as the address
-At the same time the blocknumber is stored with the transaction which allows to retrieve the timestamp for this ownership registration
-If the given IPFS CID is already registered, it will not registred again. This will ensure that the blocknumber from the initial registration will be kept unchanged.
+`_sender` account address is used internally for the registration.
+At the same time, the blocknumber is stored with the transaction which allows to later retrieve the timestamp for this ownership registration
+If the given IPFS CID is already registered, it will not be registered again. This will ensure that the blocknumber from the initial registration will be kept unchanged and nobody else can claim ownership as well.
 
 possible return codes:
 ```
@@ -43,20 +43,9 @@ let code_invalid_params = Uint32 3 (invalid CID format)
 ```
 
 
-### getOwner (ipfs_cid : String) => owner : ByStr20 *** not implemented yet ***
-Return the owner address for a given IPFS CID.
-
-possible return codes:
-```
-let code_success        = Uint32 0
-let code_item_not_found = Uint32 1
-let code_invalid_params = Uint32 3 (invalid CID format)
-```
-
-
-### deleteOwnership (ipfs_cid : String)
+### deleteRegistration (ipfs_cid : String)
 Delete / unregister ownership of given IPFS CID.
-Only owner (registered address) of item is allowed to execute this transitions
+Only registered account address of item is allowed to delete.
 
 possible return codes:
 
@@ -67,9 +56,24 @@ let code_not_authorized = Uint32 2
 let code_invalid_params = Uint32 3
 ```
 
+### transition setPrice(new_price : Uint128) [only owner]
+Allows the owner of the contract so set a price for a registration.
 
-### getItems (owner : ByStr20) => item_list : List(ipfs_cid : String)
-Return a list of IPFS CID which have been registered ownership with a given owner address.
+
+### transition getPrice()
+Get price to register a IPFS file.
+
+
+### transition getBalance() [only owner]
+Get balance of contract.
+
+### transition getFunds() [only owner]
+Transfer funds of contract to owner.
+
+
+
+### getItems (account : ByStr20) => item_list : List(ipfs_cid : String) *** NOT implemented yet ***
+Return a list of items (IPFS CIDs) which have registered ownership with a given account address.
 
 possible return codes:
 ```
