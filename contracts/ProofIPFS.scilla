@@ -30,8 +30,8 @@ contract ProofIPFS
 
 (* ipfsInventory will store a Map of Items                          *)
 (*     String  ipfs_cid (index)                                     *)
-(*     ByStr20 owner address                                        *)
-(*     BNum    block_number of registraton                          *)
+(*     ByStr20 registered account address                           *)
+(*     BNum    block_number of registration                         *)
 
 field ipfsInventory: Map String (Pair (ByStr20) (BNum))
                     = Emp String (Pair (ByStr20) (BNum))
@@ -39,42 +39,44 @@ field ipfsInventory: Map String (Pair (ByStr20) (BNum))
 
 (* ======== transitions ===============*)
 
-(* @notice: Allows `_sender` to register ownership for a IPFS file            *)
-(* @dev   : No ccess controls - anybody is allowed to register                *)
-(* @param : ipfs_cid : IPFS CID (hash) of item (file)                         *)
+(* @notice: Allows `_sender` to register ownership for a IPFS file *)
+(* @dev   : No ccess controls - anybody is allowed to register     *)
+(* @param : (String) ipfs_cid : IPFS CID (hash) of item (file)     *)
+(* @return: (Uint32) code                                          *)
 
-transition setOwnership(ipfs_cid: String)
+transition registerOwnership(ipfs_cid: String)
 
     registration <- ipfsInventory[ipfs_cid];
     match registration with
     | Some v =>
-        e = {_eventname : "setOwnership"; code : code_itemid_exist};
+        e = {_eventname : "registerOwnership"; code : code_itemid_exist};
         event e
     | None =>
         (* Creating a new Item Model *)
-		(* A new item model is a Pair of owner address (_sender) and block_number *)
+		(* A new item model is a Pair of address (_sender) and block_number *)
 		block_number <- & BLOCKNUMBER;
         new_item = Pair {(ByStr20) (BNum)} _sender block_number;
 
         (* Add the new item to the item_inventory Map, with ipfs_cid as the key   *)
         ipfsInventory[ipfs_cid] := new_item;
 
-        e = {_eventname : "setOwnership"; code : code_success};
+        e = {_eventname : "registerOwnership"; code : code_success};
         event e
     end
 end
 
 
-(* @notice: get registration info (owner, block_number) for a IPFS file       *)
-(* @dev   : No ccess controls - anybody is allowed to get that information    *)
-(* @param : ipfs_cid : IPFS CID (hash) of item (file)                         *)
+(* @notice: get registration info for IPFS file                            *)
+(* @dev   : No ccess controls - anybody is allowed to get that information *)
+(* @param : (String) ipfs_cid : IPFS CID (hash) of item (file)             *)
+(* @return: Pair {(ByStr20) (BNum)} address block_number , (Uint32) code   *)
 
 transition getRegistration(ipfs_cid: String)
 
     registration <- ipfsInventory[ipfs_cid];
     match registration with
     | Some v =>
-        (* v contains (owner, block_number) (Pair (ByStr20) (BNum)) *)
+        (* v contains (address, block_number) (Pair (ByStr20) (BNum)) *)
         e = {_eventname: "getRegistration_success"; code: code_success; msg: v};
         event e
 
@@ -86,27 +88,32 @@ transition getRegistration(ipfs_cid: String)
 end
 
 
-(* @notice: Allows a `_sender` to remove a item from the ipfsInventory *)
+(* @notice: Delete a registration for a IPFS file                          *)
+(* @dev   : only account address which registered ownership can delete     *)
+(* @param : (String) ipfs_cid : IPFS CID (hash) of item (file)             *)
+(* @return: (Uint32) code                                                  *)
 
-transition deleteOwnership(ipfs_cid: String)
+transition deleteRegistration(ipfs_cid: String)
 
   registration <- ipfsInventory[ipfs_cid];
   match registration with
   | Some v =>
     reg_address  = fst_f v;
-    is_owner = builtin eq reg_address _sender;
-    match is_owner with
+    has_registered = builtin eq reg_address _sender;
+
+    match has_registered with
         | True =>
             delete ipfsInventory[ipfs_cid];
-            e = {_eventname: "deleteOwnership"; code: code_success};
+            e = {_eventname: "deleteRegistration"; code: code_success};
             event e
             
         | False =>
-            e = {_eventname: "deleteOwnership"; code: code_not_authorized};
+            e = {_eventname: "deleteRegistration"; code: code_not_authorized};
             event e
     end
+
   | None =>
-    e = {_eventname: "deleteOwnership"; code: code_item_not_found};
+    e = {_eventname: "deleteRegistration"; code: code_item_not_found};
     event e
   end
 
