@@ -39,6 +39,9 @@ let code_amount_wrong   = Uint32 5
 ### getRegistration (ipfs_cid : String)
 Check if a IPFS CID/hash has been registered already.
 Returns account_address and block_number of registration if exist.
+If the price for a registration is not zero, then the exact amount has to be send with the transaction.
+The current price can be accessed with `getPrice()`.
+The amount has to be specified in "Qa". 10^12 Qa = 1 ZIL.
 
 possible return codes:
 ```
@@ -62,19 +65,20 @@ let code_invalid_params = Uint32 3
 ---------------------------------------------------------------------------
 ### transition setPrice(new_price : Uint128) [only owner]
 Allows the owner of the contract so set a price for a registration.
+The price has to be specified in "Qa". 10^12 Qa = 1 ZIL.
 ```
 let code_success        = Uint32 0
 let code_not_authorized = Uint32 2
 ```
 ---------------------------------------------------------------------------
 ### transition getPrice()
-Get price to register a IPFS file.
+Get price to register a IPFS file. The amount is in "Qa". 10^12 Qa = 1 ZIL.
 ```
 no error code returned
 ```
 ---------------------------------------------------------------------------
 ### transition getBalance() [only owner]
-Get balance of contract.
+Get balance of contract. The amount is in "Qa". 10^12 Qa = 1 ZIL.
 ```
 let code_success        = Uint32 0
 let code_not_authorized = Uint32 2
@@ -87,7 +91,6 @@ let code_success        = Uint32 0
 let code_not_authorized = Uint32 2
 ```
 ---------------------------------------------------------------------------
-*** NOT implemented yet ***
 ### getItems (account : ByStr20) => item_list : List(ipfs_cid : String)
 Return a list of items (IPFS CIDs) which have registered ownership with a given account address.
 
