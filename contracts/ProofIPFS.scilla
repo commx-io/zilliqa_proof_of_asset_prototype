@@ -2,7 +2,7 @@ scilla_version 0
 
 (* ProofIPFS Contract *)
 
-import PairUtils ListUtils
+import PairUtils ListUtils BoolUtils
 
 (***************************************************)
 (*               Associated library                *)
@@ -25,6 +25,12 @@ let code_cannot_get_funds   = Uint32 11
 
 let fst_f = @fst (ByStr20) (BNum)
 let snd_f = @snd (ByStr20) (BNum)
+
+let not_eq =
+	fun (a : String) =>
+	fun (b : String) =>
+		let r = builtin eq a b in
+		negb r
 
 let one_msg =
 	fun (msg : Message) =>
@@ -52,7 +58,7 @@ field price: Uint128 = Uint128 0
 (*     BNum    block_number of registration                         *)
 
 field ipfsInventory: Map String (Pair (ByStr20) (BNum))
-                   = Emp String (Pair (ByStr20) (BNum))
+				   = Emp String (Pair (ByStr20) (BNum))
 
 (* mapping each account to a list of registered items / IPFS files  *)
 
@@ -99,7 +105,7 @@ transition registerOwnership(ipfs_cid: String)
 			(* Add the new item to the item_inventory Map, with ipfs_cid as the key   *)
 			ipfsInventory[ipfs_cid] := new_item;
 
-			(* update registered_items list for _sender sccount *)
+			(* update registered_items list for _sender account *)
 			current_list <- registered_items[_sender];
 
 			match current_list with
@@ -180,10 +186,27 @@ transition deleteRegistration(ipfs_cid: String)
 
 		match has_registered with
 		| True =>
+			(* delete entry in Map holding all ipfs_cid *)
 			delete ipfsInventory[ipfs_cid];
-			e = {_eventname: "deleteRegistration"; code: code_success};
-			event e
+
+			(* update Map registered_items for _sender account             *)
+			(* current list contains all ipfs_cid that user has registered *)
+			current_list <- registered_items[_sender];
+
+			match current_list with
+			| Some l =>
+				list_filter_String = @list_filter String;
+				f = not_eq ipfs_cid;
+				new_list = list_filter_String f l;
+				registered_items[_sender] := new_list;
+				e = {_eventname: "deleteRegistration"; code: code_success};
+				event e
 			
+			| None =>
+				e = {_eventname: "deleteRegistration"; code: code_item_not_found};
+				event e
+			end
+
 		| False =>
 			e = {_eventname: "deleteRegistration"; code: code_not_authorized};
 			event e
