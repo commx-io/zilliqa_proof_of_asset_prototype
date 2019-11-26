@@ -63,7 +63,7 @@ let code_not_authorized = Uint32 2
 let code_invalid_params = Uint32 3
 ```
 ---------------------------------------------------------------------------
-### transition setPrice(new_price : Uint128) [only owner]
+### transition setPrice (new_price : Uint128) [only owner]
 Allows the owner of the contract so set a price for a registration.
 The price has to be specified in "Qa". 10^12 Qa = 1 ZIL.
 ```
@@ -71,27 +71,27 @@ let code_success        = Uint32 0
 let code_not_authorized = Uint32 2
 ```
 ---------------------------------------------------------------------------
-### transition getPrice()
+### transition getPrice ()
 Get price to register a IPFS file. The amount is in "Qa". 10^12 Qa = 1 ZIL.
 ```
 no error code returned
 ```
 ---------------------------------------------------------------------------
-### transition getBalance() [only owner]
+### transition getBalance () [only owner]
 Get balance of contract. The amount is in "Qa". 10^12 Qa = 1 ZIL.
 ```
 let code_success        = Uint32 0
 let code_not_authorized = Uint32 2
 ```
 ---------------------------------------------------------------------------
-### transition getFunds() [only owner]
+### transition getFunds () [only owner]
 Transfer funds of contract to owner.
 ```
 let code_success        = Uint32 0
 let code_not_authorized = Uint32 2
 ```
 ---------------------------------------------------------------------------
-### getItems (account : ByStr20) => item_list : List(ipfs_cid : String)
+### getItemList (account : ByStr20) => item_list : List(ipfs_cid : String)
 Return a list of items (IPFS CIDs) which have registered ownership with a given account address.
 
 possible return codes:
