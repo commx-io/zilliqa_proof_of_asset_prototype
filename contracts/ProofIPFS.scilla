@@ -182,8 +182,8 @@ end
 
 transition deleteRegistration(ipfs_cid: String)
 
-    getItem <- ipfsInventory[ipfs_cid];
-    match getItem with
+registration <- ipfsInventory[ipfs_cid];
+    match registration with
     | Some v =>
         match v with
         | RegData reg_address block_number metadata =>
