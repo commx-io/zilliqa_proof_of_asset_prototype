@@ -32,15 +32,18 @@ let not_eq =
         let r = builtin eq a b in
         negb r
 
-let one_msg =
-    fun (msg : Message) =>
-        let nil_msg = Nil {Message} in
-        Cons {Message} msg nil_msg
-
 let one_element_list =
-    fun (item : String) =>
-        let nil_item = Nil {String} in
-        Cons {String} item nil_item
+    tfun 'A =>
+    fun (item : 'A) =>
+        let nil_item = Nil {'A} in
+        Cons {'A} item nil_item
+
+let one_element_list_string = @one_element_list String
+
+let one_msg = @one_element_list Message
+
+type RegData =
+| RegData of ByStr20 BNum String
 
 
 (***************************************************)
@@ -57,8 +60,8 @@ field price: Uint128 = Uint128 0
 (*     ByStr20 registered account address                           *)
 (*     BNum    block_number of registration                         *)
 
-field ipfsInventory: Map String (Pair (ByStr20) (BNum))
-                   = Emp String (Pair (ByStr20) (BNum))
+field ipfsInventory: Map String RegData
+                   = Emp String RegData
 
 (* mapping each account to a list of registered items / IPFS files  *)
 
@@ -84,7 +87,7 @@ end
 (* @param : (String) ipfs_cid : IPFS CID (hash) of item (file)     *)
 (* @return: (Uint32) code                                          *)
 
-transition registerOwnership(ipfs_cid: String)
+transition registerOwnership(ipfs_cid: String, metadata: String)
 
     registration <- ipfsInventory[ipfs_cid];
     match registration with
@@ -100,7 +103,8 @@ transition registerOwnership(ipfs_cid: String)
             (* Creating a new Item Model *)
             (* A new item model is a Pair of address (_sender) and block_number *)
             block_number <- & BLOCKNUMBER;
-            new_item = Pair {(ByStr20) (BNum)} _sender block_number;
+            
+            new_item = RegData _sender block_number metadata;
 
             (* Add the new item to the item_inventory Map, with ipfs_cid as the key   *)
             ipfsInventory[ipfs_cid] := new_item;
@@ -113,7 +117,7 @@ transition registerOwnership(ipfs_cid: String)
                 new_list = Cons {String} ipfs_cid v;
                 registered_items[_sender] := new_list
             | None =>
-                new_list = one_element_list ipfs_cid;
+                new_list = one_element_list_string ipfs_cid;
                 registered_items[_sender] := new_list
             end;
 
@@ -178,40 +182,42 @@ end
 
 transition deleteRegistration(ipfs_cid: String)
 
-    registration <- ipfsInventory[ipfs_cid];
-    match registration with
+    getItem <- ipfsInventory[ipfs_cid];
+    match getItem with
     | Some v =>
-        reg_address  = fst_f v;
-        has_registered = builtin eq reg_address _sender;
+        match v with
+        | RegData reg_address block_number metadata =>
 
-        match has_registered with
-        | True =>
-            (* delete entry in Map holding all ipfs_cid *)
-            delete ipfsInventory[ipfs_cid];
+            has_registered = builtin eq reg_address _sender;
+    
+            match has_registered with
+            | True =>
+                (* delete entry in Map holding all ipfs_cid *)
+                delete ipfsInventory[ipfs_cid];
+    
+                (* update Map registered_items for _sender account             *)
+                (* current list contains all ipfs_cid that user has registered *)
+                current_list <- registered_items[_sender];
+    
+                match current_list with
+                | Some l =>
+                    list_filter_String = @list_filter String;
+                    f = not_eq ipfs_cid;
+                    new_list = list_filter_String f l;
+                    registered_items[_sender] := new_list;
+                    e = {_eventname: "deleteRegistration"; code: code_success};
+                    event e
+                
+                | None =>
+                    e = {_eventname: "deleteRegistration"; code: code_item_not_found};
+                    event e
+                end
 
-            (* update Map registered_items for _sender account             *)
-            (* current list contains all ipfs_cid that user has registered *)
-            current_list <- registered_items[_sender];
-
-            match current_list with
-            | Some l =>
-                list_filter_String = @list_filter String;
-                f = not_eq ipfs_cid;
-                new_list = list_filter_String f l;
-                registered_items[_sender] := new_list;
-                e = {_eventname: "deleteRegistration"; code: code_success};
-                event e
-            
-            | None =>
-                e = {_eventname: "deleteRegistration"; code: code_item_not_found};
+            | False =>
+                e = {_eventname: "deleteRegistration"; code: code_not_authorized};
                 event e
             end
-
-        | False =>
-            e = {_eventname: "deleteRegistration"; code: code_not_authorized};
-            event e
         end
-
     | None =>
         e = {_eventname: "deleteRegistration"; code: code_item_not_found};
         event e
