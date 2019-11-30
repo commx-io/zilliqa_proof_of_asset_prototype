@@ -12,8 +12,9 @@ Once a file is stored on IPFS, the Content IDentifier (CID) = hash of the file c
 The following transitions shall be available within the Scilla contract
 
 ---------------------------------------------------------------------------
-### registerOwnership (ipfs_cid : String)
-Allows (only) the sender to register an IPFS CID for an item (stored on IPFS) with his Zilliqa address.
+### registerOwnership (ipfs_cid : String, metadata: String)
+Allows (only) the sender to register an IPFS CID (hash) for an item (stored on IPFS) with his Zilliqa address.
+Metadata can be provided along with the registration. If a JSON string is used, the number and names of parameters can be flexibly adapted to the application and registered items.
 More information on IPFS Content Identifier (CID) can be found here:
 
 [https://github.com/multiformats/cid](https://github.com/multiformats/cid)
@@ -38,10 +39,25 @@ let code_amount_wrong   = Uint32 5
 ---------------------------------------------------------------------------
 ### getRegistration (ipfs_cid : String)
 Check if a IPFS CID/hash has been registered already.
-Returns account_address and block_number of registration if exist.
-If the price for a registration is not zero, then the exact amount has to be send with the transaction.
-The current price can be accessed with `getPrice()`.
-The amount has to be specified in "Qa". 10^12 Qa = 1 ZIL.
+Returns `account_address, block_number, metadata` if exist.
+
+```
+params:[] 2 items
+	0:{} 3 keys
+	vname:"code"
+	type:"Uint32"
+	value:"0"
+	1:{} 3 keys
+	vname:"msg"
+	type:"RegData"
+	value:{} 3 keys
+		constructor:"RegData"
+		argtypes:[] 0 items
+		arguments:[] 3 items
+			0:"0x17c755c09529755785978241e2db021eb4dbf569"
+			1:"4473"
+			2:"name=ironore001"
+```
 
 possible return codes:
 ```
