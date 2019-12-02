@@ -4,14 +4,10 @@
   "description": "",
   "main": "index.js",
   "directories": {
-    "test": "tests"
+    "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/commx-io/zilliqa_proof_of_asset_prototype.git"
+    "test": "node test/test.js"
   },
   "keywords": [
     "zilliqa",
@@ -19,10 +15,24 @@
     "proof",
     "ownership"
   ],
-  "author": "TrueX",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/commx-io/zilliqa_proof_of_asset_prototype/issues"
+  "author": "Sven Meyer",
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/commx-io/zilliqa_proof_of_asset_prototype.git"
   },
-  "homepage": "https://github.com/commx-io/zilliqa_proof_of_asset_prototype#readme"
+  "devDependencies": {
+    "tslib": "^1.9.3"
+  },
+  "dependencies": {
+    "@zilliqa-js/zilliqa": "^0.8.1",
+    "bn.js": "^4.11.8",
+    "body-parser": "^1.18.3",
+    "es6-promise": "^4.2.4",
+    "hash.js": "^1.1.5",
+    "isomorphic-fetch": "^2.2.1",
+    "node-fs": "^0.1.7",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.2"
+  }
 }
