@@ -34,9 +34,27 @@ async function testProofIPFS() {
 		const VERSION = bytes.pack(CHAIN_ID, MSG_VERSION);
 
         const myGasPrice = units.toQa('1000', units.Units.Li); // Gas Price that will be used by all transactions
-    
-        const proof_ipfs = zilliqa.contracts.at('397E2d22c175c0bDF7dbF815AbD123259f37A5E6');
+	
+		// contract address : zil189lz6gkpwhqtma7mlq26h5fryk0n0f0xz0hvus
+		const proof_ipfs = zilliqa.contracts.at('397E2d22c175c0bDF7dbF815AbD123259f37A5E6');
+		
+		async function getRegistration(ipfs_cid) {
+			let state = await proof_ipfs.getSubState('ipfsInventory', [ipfs_cid] );
+			return (state ? state.ipfsInventory[ipfs_cid].arguments : []);
+		}
 
+		console.log(await getRegistration('Qm001'));
+		console.log(await getRegistration('Qm002'));
+
+		async function getItemList(address) {
+			let a = address.toLowerCase();
+			let state = await proof_ipfs.getSubState('registered_items', [a] );
+			return (state ? state.registered_items[a] : []);
+		}
+
+		console.log(await getItemList(ACCOUNT_0_ADDRESS));
+
+		/*
         const params_default = {
             version: VERSION,
             gasPrice: myGasPrice,
@@ -52,7 +70,7 @@ async function testProofIPFS() {
 		
 		const return_value = receipt_get.event_logs[0].params[0];
 		console.log("return_value =", return_value);
-
+		*/
     } catch (err) {
         console.log('Blockchain Error');
         console.log(err);
