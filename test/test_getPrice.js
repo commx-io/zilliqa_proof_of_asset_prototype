@@ -15,7 +15,7 @@ const network_local_id = 111;
 const privateKey_dev   = '447a392d41017c14ec0a1786fc46388f63e7865ec759d07bce0a0c6e2dc41b5c';
 const privateKey_local = 'db11cfa086b92497c8ed5a4cc6edb3a5bfe3a640c43ffb9fc6aa0873c56f2ee3';  // 7bb3b0e8a59f3f61d9bff038f4aeb42cae2ecce8
 
-// *** CONFIG HERE ***
+// *** CONFIG NETWORK HERE ***
 const zilliqa    = new Zilliqa(network_dev);
 const privateKey = privateKey_dev;
 // *** CONFIG END ****
@@ -35,7 +35,7 @@ async function testProofIPFS() {
 		
 		const minGasPrice = await zilliqa.blockchain.getMinimumGasPrice();
     
-        const proof_ipfs = zilliqa.contracts.at('0x397E2d22c175c0bDF7dbF815AbD123259f37A5E6');
+        const proof_ipfs = zilliqa.contracts.at('397E2d22c175c0bDF7dbF815AbD123259f37A5E6');
 
         const params_default = {
             version: VERSION,
@@ -43,17 +43,14 @@ async function testProofIPFS() {
             gasLimit: Long.fromNumber(5000),
         }
 
-        console.log("calling getPrice()");
-        const callTx = await proof_ipfs.call('getPrice', [], params_default);
-        console.log("done");
-
-        // Retrieving the transaction receipt (See note 2)
-        const {receipt} = callTx.txParams;
-        console.log(JSON.stringify(receipt, null, 4));
-
-        //Get the contract state
-        console.log('Getting contract state...');
-        const state = await proof_ipfs.getState();
+		console.log("\n\nCalling getPrice()");
+        const callTxGet = await proof_ipfs.call('getPrice', [], params_default);
+        console.log('callTxGet =', callTxGet)
+        const receipt_get = callTxGet.txParams.receipt;
+		console.log('receipt_get =', receipt_get)
+		
+		const return_value = receipt_get.event_logs[0].params[0];
+		console.log("return_value =", return_value);
 
     } catch (err) {
         console.log('Blockchain Error');
