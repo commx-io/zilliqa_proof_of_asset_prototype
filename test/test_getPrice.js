@@ -1,5 +1,5 @@
 const fs = require('fs');
-const {BN, Long, bytes} = require('@zilliqa-js/util');
+const {BN, Long, bytes,units} = require('@zilliqa-js/util');
 const {Zilliqa} = require('@zilliqa-js/zilliqa');
 const {toBech32Address, getAddressFromPrivateKey} = require('@zilliqa-js/crypto');
 const assert = require('assert');
@@ -32,15 +32,16 @@ async function testProofIPFS() {
         console.log("CHAIN_ID =", CHAIN_ID);
         const MSG_VERSION = 1;
 		const VERSION = bytes.pack(CHAIN_ID, MSG_VERSION);
-		
-		const minGasPrice = await zilliqa.blockchain.getMinimumGasPrice();
+
+        const myGasPrice = units.toQa('1000', units.Units.Li); // Gas Price that will be used by all transactions
     
         const proof_ipfs = zilliqa.contracts.at('397E2d22c175c0bDF7dbF815AbD123259f37A5E6');
 
         const params_default = {
             version: VERSION,
-            gasPrice: minGasPrice,
+            gasPrice: myGasPrice,
             gasLimit: Long.fromNumber(5000),
+            amount: new BN(0)
         }
 
 		console.log("\n\nCalling getPrice()");
