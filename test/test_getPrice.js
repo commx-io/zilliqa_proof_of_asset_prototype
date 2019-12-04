@@ -47,6 +47,13 @@ const init = [
     },
   ];
 
+const params_default = {
+    version: VERSION,
+    amount: new BN(0),
+    gasPrice: myGasPrice,
+    gasLimit: Long.fromNumber(5000),
+}
+
 async function deployContract(source) {
     // Instance of class Contract
     const contract = zilliqa.contracts.new(source, init);
@@ -58,6 +65,50 @@ async function deployContract(source) {
         gasLimit: Long.fromNumber(15000),
     });
 }
+
+/*** Function implementing contract interfaces ***/
+/* get state information from blockchain node - faster than contract transition */
+
+async function getPrice() {
+    let state = await proof_ipfs.getSubState('price');
+    return (state ? parseInt(state.price) : 0);
+}
+
+async function getBalance() {
+    let state = await proof_ipfs.getSubState('_balance');
+    return (state ? parseInt(state._balance) : 0);
+}
+
+async function getRegistration(ipfs_cid) {
+    let state = await proof_ipfs.getSubState('ipfsInventory', [ipfs_cid]);
+    return (state ? state.ipfsInventory[ipfs_cid].arguments : []);
+}
+
+async function getItemList(address) {
+    let a = address.toLowerCase();
+    let state = await proof_ipfs.getSubState('registered_items', [a]);
+    return (state ? state.registered_items[a] : []);
+}
+
+async function getPrice_fromContract() {
+    const callTxGet = await proof_ipfs.call('getPrice', [], params_default);
+    const receipt_get = callTxGet.txParams.receipt;
+    const return_value = receipt_get.event_logs[0].params[0];
+    return (return_value ? parseInt(return_value) : 0);
+}
+
+async function setPrice(new_price) {
+    const callTx = await proof_ipfs.call('setPrice',
+        [{
+            vname: 'new_price',
+            type: 'Uint128',
+            value: new_price.toString(),
+        }],
+        params_default,
+    );
+    return callTx;
+}
+
 
 async function testProofIPFS() {
     try {
@@ -79,32 +130,40 @@ async function testProofIPFS() {
         console.log(stateContract);
         console.log('---------------------------------------');
 
-        /*** Function implementing contract interfaces ***/
-        /* get state information from blockchain node - faster than contract transition */
 
-        async function getPrice() {
-            let state = await proof_ipfs.getSubState('price');
-            return (state ? parseInt(state.price) : 0);
-        }
 
-        async function getBalance() {
-            let state = await proof_ipfs.getSubState('_balance');
-            return (state ? parseInt(state._balance) : 0);
-        }
 
-        async function getRegistration(ipfs_cid) {
-            let state = await proof_ipfs.getSubState('ipfsInventory', [ipfs_cid]);
-            return (state ? state.ipfsInventory[ipfs_cid].arguments : []);
-        }
-
-        async function getItemList(address) {
-            let a = address.toLowerCase();
-            let state = await proof_ipfs.getSubState('registered_items', [a]);
-            return (state ? state.registered_items[a] : []);
-        }
 
 
         console.log("price =", await getPrice() );
+        console.log("setPrice :", await setPrice(1000) );
+        console.log("price =", await getPrice() );
+        console.log('---------------------------------------');
+
+        const callTx = await proof_ipfs.call(
+            'setPrice',
+            [
+              {
+                vname: 'new_price',
+                type: 'Uint128',
+                value: '1000',
+              },
+            ],
+            {
+              // amount, gasPrice and gasLimit must be explicitly provided
+              version: VERSION,
+              amount: new BN(0),
+              gasPrice: new BN('1_000_000_000'),
+              gasLimit: Long.fromNumber(8000),
+            },
+        );
+        console.log('---------------------------------------');
+        console.log({callTx});
+        console.log('---------------------------------------');
+        
+        console.log("price =", await getPrice() );
+
+
         console.log("_balance =", await getBalance() );
         console.log(await getRegistration('Qm001'));
         console.log(await getRegistration('Qm002'));
