@@ -4,6 +4,12 @@ const { Zilliqa } = require('@zilliqa-js/zilliqa');
 const {toBech32Address, getAddressFromPrivateKey} = require('@zilliqa-js/crypto');
 const assert = require('assert');
 
+// contract address : zil189lz6gkpwhqtma7mlq26h5fryk0n0f0xz0hvus
+const contract_address_dev = '397E2d22c175c0bDF7dbF815AbD123259f37A5E6';
+// TODO
+contract_address_provided = process.argv[3];
+
+//  [network, id, account_private_key]
 const networks = [
     ['http://localhost:4200',       111, 'db11cfa086b92497c8ed5a4cc6edb3a5bfe3a640c43ffb9fc6aa0873c56f2ee3'],
     ['https://dev-api.zilliqa.com', 333, '447a392d41017c14ec0a1786fc46388f63e7865ec759d07bce0a0c6e2dc41b5c'],
@@ -12,31 +18,63 @@ const networks = [
 
 const network_name  = (process.argv[2] ? process.argv[2].toLowerCase() : 'local');
 const network_index = Math.max(['local', 'dev', 'main'].indexOf(network_name), 0);
-const [network, id, privateKey] = networks[network_index];
+const [network, chain_id, privateKey] = networks[network_index];
+
+const MSG_VERSION = 1;
+const VERSION = bytes.pack(chain_id, MSG_VERSION);
 
 console.log({network});
 
 const zilliqa = new Zilliqa(network);
 zilliqa.wallet.addByPrivateKey(privateKey);
-const ACCOUNT_0_ADDRESS = getAddressFromPrivateKey(privateKey);
+const account_address = getAddressFromPrivateKey(privateKey);
 
-console.log('ACCOUNT_0_ADDRESS =', ACCOUNT_0_ADDRESS);
+console.log('account_address =', account_address);
+
+const myGasPrice = units.toQa('1000', units.Units.Li); // Gas Price that will be used by all transactions
+
+const init = [
+    // this parameter is mandatory for all init arrays
+    {
+      vname: '_scilla_version',
+      type: 'Uint32',
+      value: '0',
+    },
+    {
+      vname: 'owner',
+      type: 'ByStr20',
+      value: `${account_address}`,
+    },
+  ];
+
+async function deployContract(source) {
+    // Instance of class Contract
+    const contract = zilliqa.contracts.new(source, init);
+
+    // Deploy the contract
+    return [deployTx, proof_ipfs] = await contract.deploy({
+        version: VERSION,
+        gasPrice: myGasPrice,
+        gasLimit: Long.fromNumber(15000),
+    });
+}
 
 async function testProofIPFS() {
     try {
-        const network_id = await zilliqa.network.GetNetworkId();
-        const CHAIN_ID = network_id.result;
-        console.log("CHAIN_ID =", CHAIN_ID);
-        const MSG_VERSION = 1;
-        const VERSION = bytes.pack(CHAIN_ID, MSG_VERSION);
-
-        const myGasPrice = units.toQa('1000', units.Units.Li); // Gas Price that will be used by all transactions
+        // const network_id = await zilliqa.network.GetNetworkId();    // iget id from network
+        // const CHAIN_ID = network_id.result;                         // ignore id from networks list
 
         console.log('myGasPrice =', myGasPrice.toString(10));  // BN to String base 10
 
-        // contract address : zil189lz6gkpwhqtma7mlq26h5fryk0n0f0xz0hvus
-        const proof_ipfs = zilliqa.contracts.at('397E2d22c175c0bDF7dbF815AbD123259f37A5E6');
+        if (contract_address_provided) {
+            proof_ipfs = zilliqa.contracts.at(contract_address_provided)
+        } else {
+            console.log(`Deploying a new contract....`);
+            const source = fs.readFileSync('contracts/ProofIPFS.scilla', 'utf-8');
+            [deployTx, proof_ipfs] = await deployContract(source);
+        }
 
+        console.log('\n\n---------------------------------------');
         const stateContract = await proof_ipfs.getState();
         console.log(stateContract);
         console.log('---------------------------------------');
@@ -70,7 +108,7 @@ async function testProofIPFS() {
         console.log("_balance =", await getBalance() );
         console.log(await getRegistration('Qm001'));
         console.log(await getRegistration('Qm002'));
-        console.log(await getItemList(ACCOUNT_0_ADDRESS));
+        console.log(await getItemList(account_address));
 
         /*
         const params_default = {
