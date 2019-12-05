@@ -39,80 +39,80 @@ console.log(`My account bech32 address is: ${toBech32Address(address)}`);
 const myGasPrice = units.toQa('1000', units.Units.Li); // Gas Price that will be used by all transactions
 
 const init = [
-	// this parameter is mandatory for all init arrays
-	{
-	  vname: '_scilla_version',
-	  type: 'Uint32',
-	  value: '0',
-	},
-	{
-	  vname: 'owner',
-	  type: 'ByStr20',
-	  value: `${address}`,
-	},
+    // this parameter is mandatory for all init arrays
+    {
+        vname: '_scilla_version',
+        type: 'Uint32',
+        value: '0',
+    },
+    {
+        vname: 'owner',
+        type: 'ByStr20',
+        value: address.toString(),
+    },
 ];
 
 const params_default =       {
-	// amount, gasPrice and gasLimit must be explicitly provided
-	version: VERSION,
-	amount: new BN(0),
-	gasPrice: myGasPrice,
-	gasLimit: Long.fromNumber(8000),
+    // amount, gasPrice and gasLimit must be explicitly provided
+    version: VERSION,
+    amount: new BN(0),
+    gasPrice: myGasPrice,
+    gasLimit: Long.fromNumber(8000),
 }
 
 async function testBlockchain() {
-	try {
+    try {
 
-	/*** Function implementing contract interfaces ***/
-	/* get state information from blockchain node - faster than contract transition */
+    /*** Function implementing contract interfaces ***/
+    /* get state information from blockchain node - faster than contract transition */
 
-	// we need this workaround until getSubState is working on kaya local network
-	async function contract_getSubState(state_filter) {
-		full_state = await proof_ipfs.getState();
-		return full_state;
-	}
+    // we need this workaround until getSubState is working on kaya local network
+    async function contract_getSubState(state_filter) {
+        full_state = await proof_ipfs.getState();
+        return full_state;
+    }
 
-	async function getPrice() {
-		let substate = await contract_getSubState('price');
-		return (substate ? parseInt(substate.price) : 0);
-	}
+    async function getPrice() {
+        let substate = await contract_getSubState('price');
+        return (substate ? parseInt(substate.price) : 0);
+    }
 
-	async function getBalance() {
-		let state = await contract_getSubState('_balance');
-		console.log({state});
-		return (state ? parseInt(state._balance) : 0);
-	}
+    async function getBalance() {
+        let state = await contract_getSubState('_balance');
+        console.log({state});
+        return (state ? parseInt(state._balance) : 0);
+    }
 
-	async function getRegistration(ipfs_cid) {
-		let state = await contract_getSubState('ipfsInventory', [ipfs_cid]);
-		return (state ? state.ipfsInventory[ipfs_cid].arguments : []);
-	}
+    async function getRegistration(ipfs_cid) {
+        let state = await contract_getSubState('ipfsInventory', [ipfs_cid]);
+        return (state ? state.ipfsInventory[ipfs_cid].arguments : []);
+    }
 
-	async function getItemList(address) {
-		let a = address.toLowerCase();
-		let state = await contract_getSubState('registered_items', [a]);
-		return (state ? state.registered_items[a] : []);
-	}
+    async function getItemList(address) {
+        let a = address.toLowerCase();
+        let state = await contract_getSubState('registered_items', [a]);
+        return (state ? state.registered_items[a] : []);
+    }
 
-	async function getPrice_fromContract() {
-		const callTxGet = await proof_ipfs.call('getPrice', [], params_default);
-		const receipt_get = callTxGet.txParams.receipt;
-		const p = receipt_get.event_logs[0].params;
-		return (p[0]['value'] ? parseInt(p[0]['value']) : 0);
-	}
+    async function getPrice_fromContract() {
+        const callTxGet = await proof_ipfs.call('getPrice', [], params_default);
+        const receipt_get = callTxGet.txParams.receipt;
+        const p = receipt_get.event_logs[0].params;
+        return (p[0]['value'] ? parseInt(p[0]['value']) : 0);
+    }
 
-	async function setPrice(new_price) {
-		const callTx = await proof_ipfs.call('setPrice',
-			[{
-				vname: 'new_price',
-				type : 'Uint128',
-				value: new_price.toString(),
-			}],
-			params_default
-		);
-	}
+    async function setPrice(new_price) {
+        const callTx = await proof_ipfs.call('setPrice',
+            [{
+                vname: 'new_price',
+                type : 'Uint128',
+                value: new_price.toString(),
+            }],
+            params_default
+        );
+    }
 
-	// *** main section *********************************************************************
+    // *** main section *********************************************************************
 
     // Get Balance
     const balance = await zilliqa.blockchain.getBalance(address);
@@ -123,61 +123,59 @@ async function testBlockchain() {
     console.log(`Your account balance is:`);
     console.log(balance.result);
     console.log(`Current Minimum Gas Price: ${minGasPrice.result}`);
-	
+    
     console.log(`My Gas Price ${myGasPrice.toString()}`);
     const isGasSufficient = myGasPrice.gte(new BN(minGasPrice.result)); // Checks if your gas price is less than the minimum gas price
     console.log(`Is the gas price sufficient? ${isGasSufficient}`);
 
     console.log("init = ", init);
 
-	if (typeof contract_address_provided == 'undefined') {
-		console.log(`Deploying a new contract....`);
-		const code = fs.readFileSync('contracts/ProofIPFS.scilla', 'utf-8');
-		const contract = zilliqa.contracts.new(code, init);
-		[deployTx, proof_ipfs] = await contract.deploy({
-			version: VERSION,
-			gasPrice: myGasPrice,
-			gasLimit: Long.fromNumber(15000),
-		});
-		// Introspect the state of the underlying transaction
-		console.log(`Deployment Transaction ID: ${deployTx.id}`);
-		console.log(`Deployment Transaction Receipt:`);
-		console.log(deployTx.txParams.receipt);
-	} else if (contract_address_provided == 'default') {
-		proof_ipfs = zilliqa.contracts.at(contract_address_dev)
-	} else {
-		proof_ipfs = zilliqa.contracts.at(contract_address_provided)
-	}
+    if (typeof contract_address_provided == 'undefined') {
+        console.log(`Deploying a new contract....`);
+        const code = fs.readFileSync('contracts/ProofIPFS.scilla', 'utf-8');
+        const contract = zilliqa.contracts.new(code, init);
+        [deployTx, proof_ipfs] = await contract.deploy({
+            version: VERSION,
+            gasPrice: myGasPrice,
+            gasLimit: Long.fromNumber(15000),
+        });
+        // Introspect the state of the underlying transaction
+        console.log(`Deployment Transaction ID: ${deployTx.id}`);
+        console.log(`Deployment Transaction Receipt:`);
+        console.log(deployTx.txParams.receipt);
+    } else if (contract_address_provided == 'default') {
+        proof_ipfs = zilliqa.contracts.at(contract_address_dev)
+    } else {
+        proof_ipfs = zilliqa.contracts.at(contract_address_provided)
+    }
 
-	// Get the deployed contract address
-	console.log('The contract address is:');
-	console.log(proof_ipfs.address);
+    // Get the deployed contract address
+    console.log('The contract address is:');
+    console.log(proof_ipfs.address);
 
-	console.log('calling getPrice())');
-	console.log(await getPrice() );
-	console.log('calling getPrice_fromContract()');
-	console.log(await getPrice_fromContract() );
+    console.log('calling getPrice())');
+    console.log(await getPrice() );
+    console.log('calling getPrice_fromContract()');
+    console.log(await getPrice_fromContract() );
 
-	console.log('calling setPrice(2000)');
-	const result = await setPrice(2000);
-	console.log({result});
+    console.log('calling setPrice(2000)');
+    const result = await setPrice(2000);
+    console.log({result});
 
-	console.log('calling getPrice())');
-	console.log(await getPrice() );
-	console.log('calling getPrice_fromContract()');
-	console.log(await getPrice_fromContract() );
+    console.log('calling getPrice())');
+    console.log(await getPrice() );
+    console.log('calling getPrice_fromContract()');
+    console.log(await getPrice_fromContract() );
 
-	console.log('calling getBalance()');
-	console.log(await getBalance() );
+    console.log('calling getBalance()');
+    console.log(await getBalance() );
 
     console.log('The state of the contract is:');
-	console.log(JSON.stringify(await proof_ipfs.getState(), null, 4));
+    console.log(JSON.stringify(await proof_ipfs.getState(), null, 4));
 
-	console.log(await contract_getSubState('_balance'));
-
-  } catch (err) {
-    console.log(err);
-  }
+    } catch (err) {
+        console.log(err);
+    }
 }
 
 testBlockchain();
