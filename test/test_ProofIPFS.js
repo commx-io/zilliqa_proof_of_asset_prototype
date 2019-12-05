@@ -83,14 +83,21 @@ async function testBlockchain() {
     }
 
     async function getRegistration(ipfs_cid) {
-        let state = await contract_getSubState('ipfsInventory', [ipfs_cid]);
-        return (state ? state.ipfsInventory[ipfs_cid].arguments : []);
+        // let state = await contract_getSubState('ipfsInventory', [ipfs_cid]);
+        // return (state ? state.ipfsInventory[ipfs_cid].arguments : []);
+        const full_state = await proof_ipfs.getState();
+        const reg_info = full_state.ipfsInventory.find(o => o.key == ipfs_cid);
+        return (reg_info ? reg_info.val.arguments : [])
     }
 
     async function getItemList(one_address) {
-        let a = address.toLowerCase();
-        let state = await contract_getSubState('registered_items', [one_address]);
-        return (state ? state.registered_items[one_address] : []);
+        let a = one_address.toLowerCase();
+        console.log({a});
+        // let state = await contract_getSubState('registered_items', [one_address]);
+        // return (state ? state.registered_items[one_address] : []);
+        const full_state = await proof_ipfs.getState();
+        const reg_info = full_state.registered_items.find(o => o.key == a);
+        return (reg_info ? reg_info.val : [])
     }
 
     async function getPrice_fromContract() {
@@ -206,8 +213,20 @@ async function testBlockchain() {
     const itemList = await getItemList(address);
     console.log({itemList});
 
-    // const reg_info = await getRegistration(item_1);
-    // console.log({reg_info});
+    const reg_info_1 = await getRegistration(item_1);
+    console.log({reg_info_1});
+
+    const reg_info_2 = await getRegistration('Qm002');
+    console.log({reg_info_2});
+
+    const reg_info_3 = await getRegistration('Qm003');
+    console.log({reg_info_3});
+
+    const items_1 = await getItemList(address);
+    console.log({items_1});
+
+    const items_0 = await getItemList("0x0000000000000000000000000000000000000000");
+    console.log({items_0});
 
     } catch (err) {
         console.log(err);
