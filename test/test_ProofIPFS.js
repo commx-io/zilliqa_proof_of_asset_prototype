@@ -52,8 +52,8 @@ const init = [
     },
 ];
 
-const params_default =       {
-    // amount, gasPrice and gasLimit must be explicitly provided
+// amount, gasPrice and gasLimit must be explicitly provided
+const params_default = {
     version: VERSION,
     amount: new BN(0),
     gasPrice: myGasPrice,
@@ -67,8 +67,8 @@ async function testBlockchain() {
     /* get state information from blockchain node - faster than contract transition */
 
     // we need this workaround until getSubState is working on kaya local network
-    async function contract_getSubState(state_filter) {
-        full_state = await proof_ipfs.getState();
+    async function contract_getSubState(state_filter, optional_id) {
+        const full_state = await proof_ipfs.getState();
         return full_state;
     }
 
@@ -79,7 +79,6 @@ async function testBlockchain() {
 
     async function getBalance() {
         let state = await contract_getSubState('_balance');
-        console.log({state});
         return (state ? parseInt(state._balance) : 0);
     }
 
@@ -88,10 +87,10 @@ async function testBlockchain() {
         return (state ? state.ipfsInventory[ipfs_cid].arguments : []);
     }
 
-    async function getItemList(address) {
+    async function getItemList(one_address) {
         let a = address.toLowerCase();
-        let state = await contract_getSubState('registered_items', [a]);
-        return (state ? state.registered_items[a] : []);
+        let state = await contract_getSubState('registered_items', [one_address]);
+        return (state ? state.registered_items[one_address] : []);
     }
 
     async function getPrice_fromContract() {
@@ -110,6 +109,29 @@ async function testBlockchain() {
             }],
             params_default
         );
+        return callTx // .txParams.receipt;
+    }
+
+    async function registerOwnership(ipfs_cid, metadata) {
+        const price  = await getPrice();
+        console.log({price});
+        let params_register = params_default;
+        params_register.amount = new BN(price);
+        console.log({params_register})
+        const callTx = await proof_ipfs.call('registerOwnership',
+            [{
+                vname: 'ipfs_cid',
+                type : 'String',
+                value: ipfs_cid,
+            },
+            {
+                vname: 'metadata',
+                type : 'String',
+                value: metadata,
+            }], 
+            params_register
+        );
+        return callTx // .txParams.receipt;
     }
 
     // *** main section *********************************************************************
@@ -170,8 +192,22 @@ async function testBlockchain() {
     console.log('calling getBalance()');
     console.log(await getBalance() );
 
+    const item_1 = 'Qm001';
+    const meta_1 = 'metadata_1';
+
+    const tx1 = await registerOwnership(item_1, meta_1);
+    console.log({tx1});
+    const tx2 = await registerOwnership('Qm002','metadata_2');
+    console.log({tx2});
+
     console.log('The state of the contract is:');
     console.log(JSON.stringify(await proof_ipfs.getState(), null, 4));
+
+    const itemList = await getItemList(address);
+    console.log({itemList});
+
+    // const reg_info = await getRegistration(item_1);
+    // console.log({reg_info});
 
     } catch (err) {
         console.log(err);
