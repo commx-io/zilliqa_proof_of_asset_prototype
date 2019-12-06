@@ -4,10 +4,13 @@ const { Zilliqa } = require('@zilliqa-js/zilliqa');
 const {toBech32Address, getAddressFromPrivateKey} = require('@zilliqa-js/crypto');
 const assert = require('assert');
 
+
+// const {ProofIPFS_API, myGasPrice} = require('../lib/ProofIPFS_API');
+
+
 // contract address : zil189lz6gkpwhqtma7mlq26h5fryk0n0f0xz0hvus
 const contract_address_dev = '0x397E2d22c175c0bDF7dbF815AbD123259f37A5E6';
 
-// TODO
 contract_address_provided = process.argv[3];
 
 //  [network, id, account_private_key]
@@ -19,7 +22,15 @@ const networks = [
 
 const network_name  = (process.argv[2] ? process.argv[2].toLowerCase() : 'local'); // local is default if not provided
 const network_index = Math.max(['local', 'dev', 'main'].indexOf(network_name), 0); // set to local if network_name not valid
-const [network, chain_id, privateKey] = networks[network_index];  // grab parameter of network
+const [network, chain_id, privateKey_0] = networks[network_index];  // grab parameter of network
+
+// Account 1 - Testnet
+// zil1amx97t2vsu59z2w8xqdvakl5cyevgfzj8mhmmz
+// 0xeEcC5F2D4C87285129c7301Acedbf4c132c42452
+const privateKey_1 = '103c44eff7bbedeefaa4b080da913d7b3b00013fabc1606651422b18ba1b1dc8';
+
+const privateKey = privateKey_0;
+
 
 const MSG_VERSION = 1;
 const VERSION = bytes.pack(chain_id, MSG_VERSION);
@@ -64,10 +75,11 @@ async function testBlockchain() {
     try {
 
     /*** Function implementing contract interfaces ***/
-    /* get state information from blockchain node - faster than contract transition */
+	// get state information from blockchain node - faster than contract transition */
+	// https://github.com/Zilliqa/Zilliqa-JavaScript-Library/blob/dev/examples/queryState.js
 
     // we need this workaround until getSubState is working on kaya local network
-    async function contract_getSubState(state_filter, optional_id) {
+    async function contract_getSubState(selector_not_used) {
         const full_state = await proof_ipfs.getState();
         return full_state;
     }
@@ -83,21 +95,35 @@ async function testBlockchain() {
     }
 
     async function getRegistration(ipfs_cid) {
-        // let state = await contract_getSubState('ipfsInventory', [ipfs_cid]);
-        // return (state ? state.ipfsInventory[ipfs_cid].arguments : []);
-        const full_state = await proof_ipfs.getState();
-        const reg_info = full_state.ipfsInventory.find(o => o.key == ipfs_cid);
-        return (reg_info ? reg_info.val.arguments : [])
+		let reg_info = [];
+		if (network_index != 0) {
+			// this is for the real Zilliqa test and main blockchain
+        	let state = await ipfs_cid.proof_ipfs('ipfsInventory', [ipfs_cid]);
+			reg_info = (state ? state.ipfsInventory[ipfs_cid].arguments : []);
+		} else {
+			// workaround to get it to work on kaya local network
+			const full_state = await proof_ipfs.getState();
+			const item = full_state.ipfsInventory.find(o => o.key == ipfs_cid);
+			reg_info = (item ? item.val.arguments : []);
+		}
+        return reg_info;
     }
 
     async function getItemList(one_address) {
-        let a = one_address.toLowerCase();
-        console.log({a});
-        // let state = await contract_getSubState('registered_items', [one_address]);
-        // return (state ? state.registered_items[one_address] : []);
-        const full_state = await proof_ipfs.getState();
-        const reg_info = full_state.registered_items.find(o => o.key == a);
-        return (reg_info ? reg_info.val : [])
+		let a = one_address.toLowerCase();
+		let item_list = [];
+		if (network_index != 0) {
+			// this is for the real Zilliqa test and main blockchain
+			const state = await proof_ipfs.getSubState('registered_items', [a]);
+			item_list = (state ? state.registered_items[a] : []);
+		} else {
+			// workaround to get it to work on kaya local network
+			const full_state = await proof_ipfs.getState();
+			const ri = full_state.registered_items;
+			const reg_info = ri.find(o => o.key == a);
+			item_list = (reg_info ? reg_info.val : [])
+		}
+		return item_list
     }
 
     async function getPrice_fromContract() {
@@ -176,11 +202,14 @@ async function testBlockchain() {
         proof_ipfs = zilliqa.contracts.at(contract_address_dev)
     } else {
         proof_ipfs = zilliqa.contracts.at(contract_address_provided)
-    }
-
+	}
+	
     // Get the deployed contract address
     console.log('The contract address is:');
     console.log(proof_ipfs.address);
+
+    console.log('The state of the contract is:');
+    console.log(JSON.stringify(await proof_ipfs.getState(), null, 4));
 
     console.log('calling getPrice())');
     console.log(await getPrice() );
@@ -202,26 +231,27 @@ async function testBlockchain() {
     const item_1 = 'Qm001';
     const meta_1 = 'metadata_1';
 
-    const tx1 = await registerOwnership(item_1, meta_1);
-    console.log({tx1});
-    const tx2 = await registerOwnership('Qm002','metadata_2');
+    // const tx4 = await registerOwnership('Qm004', 'metadata_4');
+    // console.log({tx4});
+
+/*
+    const tx2 = await registerOwnership('Qm101','first item of Account 1');
     console.log({tx2});
 
     console.log('The state of the contract is:');
     console.log(JSON.stringify(await proof_ipfs.getState(), null, 4));
 
-    const itemList = await getItemList(address);
-    console.log({itemList});
-
-    const reg_info_1 = await getRegistration(item_1);
+*/
+    const reg_info_1 = await getRegistration('Qm001');
     console.log({reg_info_1});
 
-    const reg_info_2 = await getRegistration('Qm002');
+    const reg_info_2 = await getRegistration('Qm000');
     console.log({reg_info_2});
 
-    const reg_info_3 = await getRegistration('Qm003');
+    const reg_info_3 = await getRegistration('Qm004');
     console.log({reg_info_3});
 
+    console.log("getItemList", address);
     const items_1 = await getItemList(address);
     console.log({items_1});
 
