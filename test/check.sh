@@ -1,0 +1,1 @@
+scilla-checker -gaslimit 10000 ../contracts/ProofIPFS.scilla
