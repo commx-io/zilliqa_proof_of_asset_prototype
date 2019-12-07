@@ -1,3 +1,5 @@
+/* eslint-env node, mocha */
+
 const fs = require('fs');
 const { BN, Long, bytes, units } = require('@zilliqa-js/util');
 const { Zilliqa } = require('@zilliqa-js/zilliqa');
@@ -5,6 +7,8 @@ const {toBech32Address, getAddressFromPrivateKey} = require('@zilliqa-js/crypto'
 const assert = require('assert');
 
 const {ProofIPFS_API, myGasPrice} = require('../lib/ProofIPFS_API');
+
+console.log("ProofIPFS_API.myGasPrice  =", myGasPrice);
 
 // contract address : zil189lz6gkpwhqtma7mlq26h5fryk0n0f0xz0hvus
 const contract_address_dev = '0x397E2d22c175c0bDF7dbF815AbD123259f37A5E6';
@@ -36,61 +40,32 @@ console.log({network});
 
 const zilliqa = new Zilliqa(network);
 
-console.log("zilliqa = ");
-console.log(JSON.stringify(zilliqa, null, 4));
-
 zilliqa.wallet.addByPrivateKey(privateKey);
 
 const address = getAddressFromPrivateKey(privateKey);
 
-console.log({zilliqa});
 console.log(`My account address is: ${address}`);
 console.log(`My account bech32 address is: ${toBech32Address(address)}`);
 
-// const myGasPrice = units.toQa('1000', units.Units.Li); // Gas Price that will be used by all transactions
 
-const init = [
-    // this parameter is mandatory for all init arrays
-    {
-        vname: '_scilla_version',
-        type: 'Uint32',
-        value: '0',
-    },
-    {
-        vname: 'owner',
-        type: 'ByStr20',
-        value: address.toString(),
-    },
-];
-/*
-// amount, gasPrice and gasLimit must be explicitly provided
-const params_default = {
-    version: VERSION,
-    amount: new BN(0),
-    gasPrice: myGasPrice,
-    gasLimit: Long.fromNumber(8000),
-}
-*/
 async function testBlockchain() {
     try {
 
-    // Get Balance
-    const balance = await zilliqa.blockchain.getBalance(address);
-    // Get Minimum Gas Price from blockchain
-    const minGasPrice = await zilliqa.blockchain.getMinimumGasPrice();
+// check balance and Gas
 
-    // Account balance (See note 1)
+    const balance = await zilliqa.blockchain.getBalance(address);
     console.log(`Your account balance is:`);
     console.log(balance.result);
+
+    // Get Minimum Gas Price from blockchain
+    const minGasPrice = await zilliqa.blockchain.getMinimumGasPrice();
     console.log(`Current Minimum Gas Price: ${minGasPrice.result}`);
-    
+
     console.log(`My Gas Price ${myGasPrice.toString()}`);
     const isGasSufficient = myGasPrice.gte(new BN(minGasPrice.result)); // Checks if your gas price is less than the minimum gas price
     console.log(`Is the gas price sufficient? ${isGasSufficient}`);
 
-    console.log("init = ", init);
-    
-    // get deployed contract ---------------------------------------------
+    // get deployed contract otherwise  deploy a new one 
 
     if (typeof contract_address_provided == 'undefined') {
         console.log(`Deploying a new contract....`);
@@ -128,15 +103,11 @@ async function testBlockchain() {
         proof_ipfs = zilliqa.contracts.at(contract_address_provided)
     }
     
-    console.log("getInit() =", JSON.stringify(await proof_ipfs.getInit()));
-
-    // get JS API to contract ---------------------------------------------
+    /* get JS API to contract --------------------------------------------- */
 
     contract_api = new ProofIPFS_API(proof_ipfs, chain_id);
 
-    console.log("ProofIPFS_API.TEST =", ProofIPFS_API.TEST);
-
-    console.log("contract_api.getKaya() =", contract_api.getKaya());
+    /* use ProofIPFS_API from here ---------------------------------------- */
 
     // Get the deployed contract address
     console.log('The contract address is:');
@@ -168,17 +139,16 @@ async function testBlockchain() {
     const item_1 = 'Qm001';
     const meta_1 = 'metadata_1';
 
-    // const tx4 = await contract_api.registerOwnership('Qm004', 'metadata_4');
-    // console.log({tx4});
+    const tx1 = await contract_api.registerOwnership(item_1, meta_1);
+    console.log({tx1});
 
-/*
     const tx2 = await contract_api.registerOwnership('Qm101','first item of Account 1');
     console.log({tx2});
 
     console.log('The state of the contract is:');
     console.log(JSON.stringify(await proof_ipfs.getState(), null, 4));
 
-*/
+
     const reg_info_1 = await contract_api.getRegistration('Qm001');
     console.log({reg_info_1});
 
