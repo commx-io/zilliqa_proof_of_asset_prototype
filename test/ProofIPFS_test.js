@@ -133,9 +133,8 @@ async function testBlockchain() {
     // get JS API to contract ---------------------------------------------
 
     contract_api = new ProofIPFS_API(proof_ipfs, chain_id);
-    if (network_index == 0) contract_api.setKaya(true);	// workround to fix kaya getState and getSubState errors
 
-    console.log(ProofIPFS_API.TEST);
+    console.log("ProofIPFS_API.TEST =", ProofIPFS_API.TEST);
 
     console.log("contract_api.getKaya() =", contract_api.getKaya());
 
