@@ -62,6 +62,7 @@ describe('ProofIPFS', function() {
         })
 
         it('should deploy the contract', async function() {
+            // https://mochajs.org/#timeouts
             this.timeout(10000);
             this.slow(5000);
             const MSG_VERSION = 1;
@@ -91,5 +92,50 @@ describe('ProofIPFS', function() {
         })
     })
 
+    describe('Test the contract', function() {
 
+        this.timeout(5000);
+        this.slow(5000);
+
+        it('should get the contract_api', async function() {
+            contract_api = new ProofIPFS_API(proof_ipfs, chain_id);
+            expect(contract_api).be.instanceOf(ProofIPFS_API);
+        })
+
+        it('should registerOwnership for item_0', async function() {
+            item_0 = 'Qm00000000000000000000000000000000000000000000';
+            meta_0 = "{filename : 'Qm_0.txt'}";
+            const result = await contract_api.registerOwnership(item_0, meta_0);
+            const ok = result.success;
+            expect(ok).to.be.true;
+        })
+
+        it('should registerOwnership for item_1', async function() {
+            item_1 = 'Qm11111111111111111111111111111111111111111111';
+            meta_1 = "{filename : 'Qm_1.txt'}";
+            const result = await contract_api.registerOwnership(item_1, meta_1);
+            const ok = result.success;
+            expect(ok).to.be.true;
+        })
+
+        it('should retrieve list of registered items for a given address', async function() {
+            const result = await contract_api.getItemList(address);
+            const expected_list = [item_0, item_1];
+            const ok = (result.length == expected_list.length) && (expected_list.every(e => result.includes(e)));
+            expect(ok).to.be.true;
+        })
+
+        it('should check registration information for an item', async function() {
+            const result = await contract_api.getRegistration(item_0);
+            const ok = (result[0] == address) && (result[2] == meta_0);
+            expect(ok).to.be.true;
+        })
+
+        it('should report if item is not registered', async function() {
+            item_9 = 'Qm99999999999999999999999999999999999999999999';
+            const result = await contract_api.getRegistration(item_9);
+            expect(result).be.empty;
+        })
+
+    })
 })
