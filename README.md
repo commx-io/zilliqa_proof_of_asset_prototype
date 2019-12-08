@@ -12,7 +12,7 @@ Once a file is stored on IPFS, the Content IDentifier (CID) = hash of the file c
 The following transitions shall be available within the Scilla contract
 
 ---------------------------------------------------------------------------
-### registerOwnership (ipfs_cid : String, metadata: String)
+### registerOwnership (ipfs_cid : String, metadata : String)
 Allows (only) the sender to register an IPFS CID (hash) for an item (stored on IPFS) with his Zilliqa address.
 Metadata can be provided along with the registration. If a JSON string is used, the number and names of parameters can be flexibly adapted to the application and registered items.
 More information on IPFS Content Identifier (CID) can be found here:
@@ -131,3 +131,36 @@ let code_cannot_get_funds   = Uint32 11
 ---------------------------------------------------------------------------
 ## Testnet contract
 see [Releases](../../releases) 
+---------------------------------------------------------------------------
+
+---------------------------------------------------------------------------
+## Test
+
+Start Kaya local blockchain
+```
+$ cd ~/zilliqa/kaya
+$ node src/server.js -v -f test/account-fixtures.json
+```
+
+### Install
+```
+$ git clone https://github.com/commx-io/zilliqa_proof_of_asset_prototype.git
+$ nvm use v10
+$ npm install
+```
+
+Run test on Kaya local blockchain
+```
+$ npm test
+```
+or
+```
+$ npm --network=kaya test
+```
+
+
+Run test on Zilliqa Testnet
+```
+$ npm --network=dev test
+```
+
