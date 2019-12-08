@@ -152,7 +152,7 @@ async function testBlockchain() {
     
     const price_registration = units.toQa(1, units.Units.Zil);
 
-    console.log('calling setPrice(${price_registration}) [Qa]');
+    console.log("calling setPrice(${price_registration}) [Qa]");
     const result = await contract_api.setPrice(price_registration);
     console.log({result});
 
@@ -168,7 +168,11 @@ async function testBlockchain() {
     const meta_1 = 'metadata_1';
 
     const tx1 = await contract_api.registerOwnership(item_1, meta_1);
-    console.log({tx1});
+	console.log({tx1});
+	
+	const tx1_again = await contract_api.registerOwnership(item_1, meta_1);
+	console.log("try to register items_1 again")
+    console.log(JSON.stringify(tx1_again));
 
     const tx2 = await contract_api.registerOwnership('Qm101','first item of Account 1');
     console.log({tx2});
