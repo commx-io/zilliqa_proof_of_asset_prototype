@@ -11,21 +11,34 @@ const {toBech32Address, getAddressFromPrivateKey} = require('@zilliqa-js/crypto'
 
 const {ProofIPFS_API, myGasPrice} = require('../lib/ProofIPFS_API');
 
-contract_address_provided = process.argv[3];
+//    contract_address_dev = 'zil189lz6gkpwhqtma7mlq26h5fryk0n0f0xz0hvus';
+const contract_address_dev = '0x397E2d22c175c0bDF7dbF815AbD123259f37A5E6';
 
-//  [network, id, account_private_key, account_public_key]
-const networks = [
-    ['http://localhost:4200',       111, 'db11cfa086b92497c8ed5a4cc6edb3a5bfe3a640c43ffb9fc6aa0873c56f2ee3', '0x7bb3b0e8a59f3f61d9bff038f4aeb42cae2ecce8'],
-    ['https://dev-api.zilliqa.com', 333, '447a392d41017c14ec0a1786fc46388f63e7865ec759d07bce0a0c6e2dc41b5c', ''],
-    ['https://api.zilliqa.com',       1, '', '']
-];
+// $ npm --network=kaya test
+network_choice = process.env.npm_config_network || 'kaya';
+console.log({network_choice});
 
-const [network, chain_id, privateKey, account_address] = networks[0];  // grab parameter of kaya local network
+const networks = {
+    kaya : ['http://localhost:4200',       111, 'db11cfa086b92497c8ed5a4cc6edb3a5bfe3a640c43ffb9fc6aa0873c56f2ee3', '0x7bb3b0e8a59f3f61d9bff038f4aeb42cae2ecce8',  10000,   5000],
+    dev  : ['https://dev-api.zilliqa.com', 333, '447a392d41017c14ec0a1786fc46388f63e7865ec759d07bce0a0c6e2dc41b5c', 'zil1pw587sm57lvlu0wlwkc3gw2sddy35au6esw589', 180000, 180000],
+    main : ['https://api.zilliqa.com',       1, '', '', 180000, 180000]
+};
+
+network_parameter = networks[network_choice.toLowerCase()]
+if (network_parameter == null)
+	throw new Error("unknown blockchain network");
+const [network, chain_id, privateKey, account_address, timeout_deploy, timeout_transition] = network_parameter;
 
 
 describe('ProofIPFS', function() {
 
     describe('Connect to Zilliqa Blockchain', function() {
+
+		it('should run on node version v10', function() {
+			const node_version = process.version;
+			const ok = (node_version.substring(0,4) == 'v10.');
+			expect(ok).to.be.true;
+		})
 
         it('should connect to the blockchain and get the right chain_id', async function() {
             zilliqa = new Zilliqa(network);
