@@ -13,18 +13,20 @@ console.log("ProofIPFS_API.myGasPrice  =", myGasPrice);
 // contract address : zil189lz6gkpwhqtma7mlq26h5fryk0n0f0xz0hvus
 const contract_address_dev = '0x397E2d22c175c0bDF7dbF815AbD123259f37A5E6';
 
+network_choice = process.argv[2] || 'kaya';
 contract_address_provided = process.argv[3];
 
 //  [network, id, account_private_key]
-const networks = [
-    ['http://localhost:4200',       111, 'db11cfa086b92497c8ed5a4cc6edb3a5bfe3a640c43ffb9fc6aa0873c56f2ee3'],
-    ['https://dev-api.zilliqa.com', 333, '447a392d41017c14ec0a1786fc46388f63e7865ec759d07bce0a0c6e2dc41b5c'],
-    ['https://api.zilliqa.com',       1, '']
-];
+const networks = {
+    kaya : ['http://localhost:4200',       111, 'db11cfa086b92497c8ed5a4cc6edb3a5bfe3a640c43ffb9fc6aa0873c56f2ee3'],
+    dev  : ['https://dev-api.zilliqa.com', 333, '447a392d41017c14ec0a1786fc46388f63e7865ec759d07bce0a0c6e2dc41b5c'],
+    main : ['https://api.zilliqa.com',       1, '']
+};
 
-const network_name  = (process.argv[2] ? process.argv[2].toLowerCase() : 'local'); // local is default if not provided
-const network_index = Math.max(['local', 'dev', 'main'].indexOf(network_name), 0); // set to local if network_name not valid
-const [network, chain_id, privateKey_0] = networks[network_index];  // grab parameter of network
+network_parameter = networks[network_choice.toLowerCase()]
+if (network_parameter == null)
+	throw new Error("unknown blockchain network");
+const [network, chain_id, privateKey_0] = network_parameter;  // grab parameter of network
 
 // Account 1 - Testnet
 // zil1amx97t2vsu59z2w8xqdvakl5cyevgfzj8mhmmz
