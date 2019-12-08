@@ -31,8 +31,8 @@ const networks = {
             333,
             '447a392d41017c14ec0a1786fc46388f63e7865ec759d07bce0a0c6e2dc41b5c',
             'zil1pw587sm57lvlu0wlwkc3gw2sddy35au6esw589',
-            180000,
-            180000],
+            300000,
+            300000],
     main : ['https://api.zilliqa.com',       1, '', '', 180000, 180000]
 };
 
@@ -114,7 +114,7 @@ describe('ProofIPFS', function() {
                 gasPrice: myGasPrice,
                 gasLimit: Long.fromNumber(15000),
             });
-
+            console.log("\n        contract address =", proof_ipfs.address);
             expect(deployTx.txParams.receipt.success).to.be.true;
         })
     })
@@ -132,16 +132,16 @@ describe('ProofIPFS', function() {
         it('should registerOwnership for item_0', async function() {
             item_0 = 'Qm00000000000000000000000000000000000000000000';
             meta_0 = "{filename : 'Qm_0.txt'}";
-            const result = await contract_api.registerOwnership(item_0, meta_0);
-            const ok = result.success;
+            const [code, result] = await contract_api.registerOwnership(item_0, meta_0);
+            const ok = (result.success && code == 0);
             expect(ok).to.be.true;
         })
 
         it('should registerOwnership for item_1', async function() {
             item_1 = 'Qm11111111111111111111111111111111111111111111';
             meta_1 = "{filename : 'Qm_1.txt'}";
-            const result = await contract_api.registerOwnership(item_1, meta_1);
-            const ok = result.success;
+            const [code, result] = await contract_api.registerOwnership(item_1, meta_1);
+            const ok = (result.success && code == 0);
             expect(ok).to.be.true;
         })
 
@@ -164,9 +164,13 @@ describe('ProofIPFS', function() {
             expect(result).be.empty;
         })
 
-        it('should display address of deployed contract', function() {
-            console.log("\n        contract address =", proof_ipfs.address);
-            expect(true).to.be.true;
+        it('should complain if items is already registered', async function() {
+            item_1 = 'Qm11111111111111111111111111111111111111111111';
+            meta_1 = "{filename : 'Qm_1.txt'}";
+            const code_already_registered = 4;
+            const [code, result] = await contract_api.registerOwnership(item_1, meta_1);
+            const ok = (result.success && (code == code_already_registered));
+            expect(ok).to.be.true;
         })
     })
 })
