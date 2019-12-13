@@ -140,16 +140,16 @@ describe('ProofIPFS', function() {
         it('should registerOwnership for item_0', async function() {
             item_0 = 'Qm00000000000000000000000000000000000000000000';
             meta_0 = "{filename : 'Qm_0.txt'}";
-            const [code, result] = await contract_api.registerOwnership(item_0, meta_0);
-            const ok = (result.success && code == 0);
+            const [code, receipt] = await contract_api.registerOwnership(item_0, meta_0);
+            const ok = (receipt.success && code == 0);
             expect(ok).to.be.true;
         })
 
         it('should registerOwnership for item_1', async function() {
             item_1 = 'Qm11111111111111111111111111111111111111111111';
             meta_1 = "{filename : 'Qm_1.txt'}";
-            const [code, result] = await contract_api.registerOwnership(item_1, meta_1);
-            const ok = (result.success && code == 0);
+            const [code, receipt] = await contract_api.registerOwnership(item_1, meta_1);
+            const ok = (receipt.success && code == 0);
             expect(ok).to.be.true;
         })
 
@@ -174,8 +174,8 @@ describe('ProofIPFS', function() {
 
         it('should complain if items is already registered', async function() {
             const code_already_registered = 4;
-            const [code, result] = await contract_api.registerOwnership(item_1, meta_1);
-            const ok = (result.success && (code == code_already_registered));
+            const [code, receipt] = await contract_api.registerOwnership(item_1, meta_1);
+            const ok = (receipt.success && (code == code_already_registered));
             expect(ok).to.be.true;
         })
     })
