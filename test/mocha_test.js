@@ -129,6 +129,14 @@ describe('ProofIPFS', function() {
             expect(contract_api).be.instanceOf(ProofIPFS_API);
         })
 
+        it('should setPrice to 1000000000', async function() {
+            const new_price = 1000000000;
+            const receipt = await contract_api.setPrice(new_price);
+            const current_price = await contract_api.getPrice();
+            const price_match = (current_price == new_price);
+            expect(receipt.success && price_match).to.be.true;
+        })
+
         it('should registerOwnership for item_0', async function() {
             item_0 = 'Qm00000000000000000000000000000000000000000000';
             meta_0 = "{filename : 'Qm_0.txt'}";
@@ -165,8 +173,6 @@ describe('ProofIPFS', function() {
         })
 
         it('should complain if items is already registered', async function() {
-            item_1 = 'Qm11111111111111111111111111111111111111111111';
-            meta_1 = "{filename : 'Qm_1.txt'}";
             const code_already_registered = 4;
             const [code, result] = await contract_api.registerOwnership(item_1, meta_1);
             const ok = (result.success && (code == code_already_registered));
